@@ -6,6 +6,8 @@ A [DevTools](https://developer.chrome.com/docs/devtools) plugin that adds a "lib
 
 Works with [@libp2p/devtools-metrics](https://www.npmjs.com/package/@libp2p/devtools-metrics) so the developer has to opt-in to having their node monitored (and potentially modified) by this plugin.
 
+<img width="840" alt="image" src="https://github.com/ipfs-shipyard/js-libp2p-devtools/assets/665810/f8f6a7c8-377f-41d6-948f-95d8469f58b8">
+
 ## Installation instructions
 
 1. Browser installation
