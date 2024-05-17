@@ -4,7 +4,7 @@
 
 A [DevTools](https://developer.chrome.com/docs/devtools) plugin that adds a "libp2p" tab to your developer tools that contacts a libp2p node running on the current page.
 
-Works with [@libp2p/devtools-metrics](https://www.npmjs.com/package/@libp2p/devtools-metrics) so the developer has to opt-in to having their node monitored (and potentially modified) by this plugin.
+Works with [@libp2p/devtools-metrics](https://www.npmjs.com/package/@libp2p/devtools-metrics) which supplies metrics and allows us to interact with the running node.
 
 <img width="840" alt="image" src="https://github.com/ipfs-shipyard/js-libp2p-devtools/assets/665810/f8f6a7c8-377f-41d6-948f-95d8469f58b8">
 
@@ -44,7 +44,7 @@ const node = await createLibp2p({
   - Bonus points for letting the user define their own graphs a la Graphana/Prometheus
   - More bonus points for being able to export/import graph configs
 1. Dynamic panels
-  - We should be able to inspect the libp2p node's configured services and, for example, only show a DHT tab if the DHT is configured
+  - We should be able to inspect the libp2p node's configured services (or protocols?) and, for example, only show a DHT tab if the DHT is configured
 1. Light theme support
   - There are partial overrides for light theme font/background/border colours but we need better detection of when it's enabled
 1. ??? more features here
