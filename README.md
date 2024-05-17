@@ -37,10 +37,12 @@ const node = await createLibp2p({
 
 1. Firefox compatibility
   - There are some differences between Chrome and Firefox in how they pass messages between the DevTools and the content script. These need to be worked out.
-2. Graphs
+1. Tests
+  - There aren't a lot of tests here yet
+1. Graphs
   - We don't do much with the collected metrics yet. It would be nice to use Chart.js or similar to show some useful graphs
   - Bonus points for letting the user define their own graphs a la Graphana/Prometheus
   - More bonus points for being able to export/import graph configs
-3. Dynamic panels
+1. Dynamic panels
   - We should be able to inspect the libp2p node's configured services and, for example, only show a DHT tab if the DHT is configured
-4. ??? more features here
+1. ??? more features here
