@@ -1,0 +1,24 @@
+.Menu {
+  border-bottom: 1px solid #5e5e5e;
+}
+
+.light .Menu {
+  border-color: #d3e3fd;
+}
+
+.Menu button {
+  border: none;
+  background-color: transparent;
+  font-size: 14px;
+  padding: 7px;
+  color: var(--text-color);
+}
+
+.Menu button:hover {
+  color: #FFF;
+}
+
+.Menu button.selected {
+  color: #a8c7fa;
+  border-bottom: 1px solid #a8c7fa;
+}

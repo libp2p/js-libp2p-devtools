@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+
+  "name": "Helia DevTools",
+  "version": "0.0.1",
+  "description": "Inspect a running Helia node",
+  "author": "IP Shipyard",
+
+  "permissions": [],
+
+  "devtools_page": "devtools.html",
+
+  // https://stackoverflow.com/questions/75043889/manifest-v3-background-scripts-service-worker-on-firefox
+  "background": {
+    // for chrome
+    "service_worker": "/dist/background.js",
+    // for firefox
+    "scripts": ["/dist/background.js"]
+  },
+
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": [
+      "/dist/content-script.js"
+    ],
+    "run_at": "document_end",
+    "all_frames": true
+  }]
+}

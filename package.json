@@ -1,0 +1,23 @@
+{
+  "name": "@libp2p/devtools",
+  "version": "0.0.1",
+  "description": "A browser plugin that lets you inspect a running libp2p node",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@libp2p/devtools-metrics": "next",
+    "multiformats": "^13.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "uint8arrays": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "aegir": "^42.2.11"
+  }
+}

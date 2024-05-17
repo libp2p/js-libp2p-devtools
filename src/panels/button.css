@@ -1,0 +1,35 @@
+.Button {
+  border: 1px solid var(--action-border-color);
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--active-text-color);
+  margin-right: 6px;
+}
+
+.Button.primary {
+  border: none;
+  background-color: var(--primary-action-color);
+  color: var(--primary-action-text-color);
+}
+.Button.primary:hover {
+  background-color: var(--primary-action-color-hover);
+}
+.Button.primary:active {
+  background-color: var(--primary-action-color-active);
+}
+
+.Button.secondary {
+
+}
+
+.Button.danger {
+  border: none;
+  background-color: var(--dark-warning-color);
+  color: var(--warning-text-color);
+}
+.Button.danger:hover {
+  background-color: var(--dark-warning-color-hover);
+}
+.Button.danger:active {
+  background-color: var(--dark-warning-color-active);
+}
