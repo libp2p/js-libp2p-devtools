@@ -45,4 +45,6 @@ const node = await createLibp2p({
   - More bonus points for being able to export/import graph configs
 1. Dynamic panels
   - We should be able to inspect the libp2p node's configured services and, for example, only show a DHT tab if the DHT is configured
+1. Light theme support
+  - There are partial overrides for light theme font/background/border colours but we need better detection of when it's enabled
 1. ??? more features here
