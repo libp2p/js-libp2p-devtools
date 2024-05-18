@@ -1,5 +1,9 @@
 
 export function getBrowserInstance(): typeof chrome {
+  if (globalThis.chrome != null) {
+    return globalThis.chrome
+  }
+
   // Get extension api Chrome or Firefox
-  return window.chrome ?? (window as any)['browser']
+  return (globalThis as any)['browser']
 }

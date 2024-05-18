@@ -2,7 +2,7 @@ import React from 'react'
 import './floating-panel.css'
 
 interface FloatingPanelProps {
-  children?: any[]
+  children?: any
 }
 
 export function FloatingPanel ({ children }: FloatingPanelProps) {

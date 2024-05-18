@@ -4,8 +4,10 @@ import { createRoot } from 'react-dom/client'
 import { getBrowserTheme } from './utils/get-theme.js'
 import { Inspector } from './panels/inspector.js'
 import { FloatingPanel } from './panels/floating-panel.js'
-import type { BrowserMessage, IdentifyMessage, Peer } from '@libp2p/devtools-metrics'
-import { sendMessage } from './utils/send-message.js'
+import { LIBP2P_DEVTOOLS_METRICS_INSTANCE, Status } from '@libp2p/devtools-metrics'
+import type { Peer } from '@libp2p/devtools-metrics'
+import { evalOnPage } from './utils/eval-on-page.js'
+import { delay } from './utils/delay.js'
 
 interface OfflineAppState {
   status: 'init' | 'missing' | 'error'
@@ -21,7 +23,7 @@ interface OnlineAppState {
 
 type AppState = OfflineAppState | OnlineAppState
 
-const Error = () => {
+const ErrorPanel = () => {
   return (
     <>
       <FloatingPanel>
@@ -31,7 +33,7 @@ const Error = () => {
   )
 }
 
-const Detecting = () => {
+const DetectingPanel = () => {
   return (
     <>
       <FloatingPanel>
@@ -41,7 +43,7 @@ const Detecting = () => {
   )
 }
 
-const Missing = () => {
+const MissingPanel = () => {
   return (
     <>
       <FloatingPanel>
@@ -74,54 +76,43 @@ class App extends Component {
       status: 'init'
     }
 
+    // let the user know if we can't find libp2p after 5s
     const timeout = setTimeout(() => {
       this.setState({
         status: 'missing'
       })
     }, 5000)
 
-    // not sure when libp2p will be ready so keep asking for identify message
-    const interval = setInterval(() => {
-      console.info('devtools sending identify message to page')
-      // request a self update
-      const message: IdentifyMessage = {
-        source: '@libp2p/devtools-metrics:devtools',
-        type: 'identify'
-      }
+    Promise.resolve().then(async () => {
+      await findLibp2p(1000)
 
-      sendMessage(message)
-    }, 500)
-
-    chrome.runtime.onMessage.addListener((message: BrowserMessage) => {
-      if (message.source !== '@libp2p/devtools-metrics:node') {
-        // ignore messages from other sources
-        return
-      }
-
+      // we found it, no need to let the user know
       clearTimeout(timeout)
 
-      if (message.type === 'self') {
-        clearInterval(interval)
+      while (true) {
+        try {
+          const status = await evalOnPage<Status>(`${LIBP2P_DEVTOOLS_METRICS_INSTANCE}.getStatus()`)
 
-        this.setState({
-          status: 'online',
-          peerId: message.peerId,
-          multiaddrs: message.multiaddrs,
-          protocols: message.protocols,
-          peers: []
-        })
+          this.setState({
+            status: 'online',
+            peerId: status.peerId,
+            multiaddrs: status.multiaddrs,
+            protocols: status.protocols,
+            peers: status.peers
+          })
+        } catch (err: any) {
+          console.error('error getting status', err)
+        } finally {
+          await delay(1000)
+        }
       }
+    })
+    .catch(err => {
+      console.error('error communicating with page', err)
 
-      if (message.type === 'peers') {
-        console.info('devtools got peers', message)
-        this.setState({
-          peers: message.peers
-        })
-      }
-
-      if (message.type !== 'metrics') {
-        console.info('devtools incoming message from chrome runtime', message)
-      }
+      this.setState({
+        status: 'error'
+      })
     })
   }
 
@@ -134,19 +125,19 @@ class App extends Component {
 
     if (this.state.status === 'init') {
       return (
-        <Detecting />
+        <DetectingPanel />
       )
     }
 
     if (this.state.status === 'missing') {
       return (
-        <Missing />
+        <MissingPanel />
       )
     }
 
     if (this.state.status === 'error') {
       return (
-        <Error />
+        <ErrorPanel />
       )
     }
 
@@ -167,3 +158,24 @@ if (body != null) {
 
 const root = createRoot(document.getElementById('app'))
 root.render(<App />)
+
+async function findLibp2p (retryAfter: number): Promise<void> {
+  while (true) {
+    try {
+      await evalOnPage<boolean, void>(`${LIBP2P_DEVTOOLS_METRICS_INSTANCE} != null`, (arg) => {
+        if (!arg) {
+          throw new Error('libp2p not found')
+        }
+      })
+
+      return
+    } catch (err) {
+      if (err.message === 'libp2p not found') {
+        await delay(retryAfter)
+        continue
+      }
+
+      throw err
+    }
+  }
+}
