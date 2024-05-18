@@ -12,6 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "@libp2p/devtools-metrics": "next",
+    "@multiformats/multiaddr": "^12.2.3",
+    "@multiformats/multiaddr-matcher": "^1.2.1",
     "multiformats": "^13.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

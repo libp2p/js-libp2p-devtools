@@ -5,7 +5,11 @@
   "description": "Inspect a running Helia node",
   "author": "IP Shipyard",
   "icons": {
-    "64": "/public/img/libp2p-64x64.png"
+    "64": "/public/img/libp2p-64x64.png",
+    "128": "/public/img/libp2p-128x128.png",
+    "256": "/public/img/libp2p-256x256.png",
+    "512": "/public/img/libp2p-512x512.png",
+    "1024": "/public/img/libp2p-1024x1024.png"
   },
   "permissions": [],
   "devtools_page": "devtools.html"

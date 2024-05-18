@@ -10,7 +10,7 @@ export function Inspector ({ peerId, protocols, multiaddrs, peers }) {
 
   return (
     <>
-      <Menu onClick={(panel) => setPanel(panel)} panel={panel} />
+      <Menu onClick={(panel) => setPanel(panel)} panel={panel} peers={peers} />
       { panel === 'node' ? <Node peerId={peerId} protocols={protocols} multiaddrs={multiaddrs} /> : undefined }
       { panel === 'peers' ? <Peers peers={peers} /> : undefined }
       { panel === 'debug' ? <Debug /> : undefined }

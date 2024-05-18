@@ -1,1 +1,1 @@
-chrome.devtools.panels.create('libp2p', '/public/img/libp2p-64x64.png', '/public/panel.html')
+chrome.devtools.panels.create('libp2p', '/public/img/libp2p-monochrome.svg', '/public/panel.html')

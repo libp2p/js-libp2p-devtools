@@ -1,9 +1,17 @@
 import './peers.css'
-import React from 'react'
+import React, { useState } from 'react'
 import { Panel } from './panel.js'
 import { Peer } from '@libp2p/devtools-metrics'
 import { base64 } from 'multiformats/bases/base64'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
+import { multiaddr } from '@multiformats/multiaddr'
+import { WebRTC, WebSockets, WebSocketsSecure, WebTransport, Circuit } from '@multiformats/multiaddr-matcher'
+import webrtcLogo from '../../public/img/webrtc.svg'
+import websocketLogo from '../../public/img/websocket.svg'
+import webtransportLogo from '../../public/img/webtransport.svg'
+import circuitRelay from '../../public/img/circuit-relay.svg'
+import disclosureTriangleClosed from '../../public/img/disclosure-triangle-closed.svg'
+import disclosureTriangleOpen from '../../public/img/disclosure-triangle-open.svg'
 
 interface PeersProps {
   peers: Peer[]
@@ -19,11 +27,11 @@ export function Peers ({ peers }: PeersProps) {
   }
 
   return (
-    <Panel>
+    <>
       {
         peers.map(peer => <Peer key={peer.peerId} peer={peer} />)
       }
-    </Panel>
+    </>
   )
 }
 
@@ -33,16 +41,61 @@ interface PeerProps {
 }
 
 function Peer ({ peer }: PeerProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  if (expanded) {
+    return (
+      <Panel>
+        <h2><img src={disclosureTriangleOpen} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(false)} /> <PeerIcon peer={peer} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.peerId}</span></h2>
+        <p>
+          <PeerTags peer={peer} />
+        </p>
+        <ConnectedMultiaddrs peer={peer} />
+        <PeerMultiaddrs peer={peer} />
+        <PeerProtocols peer={peer} />
+      </Panel>
+    )
+  }
+
   return (
     <Panel>
-      <h2><PeerAgent peer={peer} /> <span className="PeerId">{peer.peerId}</span></h2>
+      <h2><img src={disclosureTriangleClosed} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(true)} /> <PeerIcon peer={peer} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.peerId}</span></h2>
       <p>
         <PeerTags peer={peer} />
       </p>
-      <ConnectedMultiaddrs peer={peer} />
-      <PeerMultiaddrs peer={peer} />
-      <PeerProtocols peer={peer} />
     </Panel>
+  )
+}
+
+function TransportIcon ({ src }) {
+  return <img src={src} height={16} width={16} className={'Icon'} />
+}
+
+function PeerIcon ({ peer }: PeerProps) {
+  return (
+    <>
+      {
+        peer.addresses.map(address => {
+         const ma = multiaddr(address)
+
+         if (WebRTC.matches(ma)) {
+          return <TransportIcon src={webrtcLogo} />
+         }
+
+         if (WebSockets.matches(ma) || WebSocketsSecure.matches(ma)) {
+          return <TransportIcon src={websocketLogo} />
+         }
+
+         if (WebTransport.matches(ma)) {
+          return <TransportIcon src={webtransportLogo} />
+         }
+
+         if (Circuit.matches(ma)) {
+          return <TransportIcon src={circuitRelay} />
+         }
+        })
+      }
+    </>
   )
 }
 

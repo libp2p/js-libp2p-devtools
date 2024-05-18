@@ -6,5 +6,9 @@ await esbuild.build({
   ],
   bundle: true,
   outfile: 'dist/app.js',
-  format: 'esm'
+  format: 'esm',
+  loader: {
+    '.png': 'dataurl',
+    '.svg': 'dataurl'
+  }
 })
