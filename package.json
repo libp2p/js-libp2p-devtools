@@ -1,26 +1,29 @@
 {
   "name": "@libp2p/devtools",
   "version": "0.0.1",
-  "description": "A browser plugin that lets you inspect a running libp2p node",
+  "description": "Inspect a libp2p node running on the current page",
   "type": "module",
   "scripts": {
     "build": "node esbuild.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dep-check": "aegir dep-check -i esbuild"
+    "dep-check": "aegir dep-check -i esbuild",
+    "start:firefox": "web-ext run --source-dir . --verbose --devtools"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@libp2p/devtools-metrics": "next",
+    "@libp2p/devtools-metrics": "*",
     "@multiformats/multiaddr": "^12.2.3",
     "@multiformats/multiaddr-matcher": "^1.2.1",
     "multiformats": "^13.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-syntax-highlighter": "^15.5.0",
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.268",
-    "aegir": "^42.2.11"
+    "aegir": "^42.2.11",
+    "web-ext": "^7.11.0"
   }
 }

@@ -2,15 +2,22 @@
   "manifest_version": 3,
   "name": "libp2p DevTools",
   "version": "0.0.1",
-  "description": "Inspect a running Helia node",
+  "description": "Inspect a libp2p node running on the current page",
   "author": "IP Shipyard",
   "icons": {
-    "64": "/public/img/libp2p-64x64.png",
-    "128": "/public/img/libp2p-128x128.png",
-    "256": "/public/img/libp2p-256x256.png",
-    "512": "/public/img/libp2p-512x512.png",
-    "1024": "/public/img/libp2p-1024x1024.png"
+    "16": "/public/img/libp2p-16.png",
+    "48": "/public/img/libp2p-48.png",
+    "128": "/public/img/libp2p-128.png"
   },
   "permissions": [],
-  "devtools_page": "devtools.html"
+  "devtools_page": "devtools.html",
+  "background": {
+    "scripts": ["/dist/background.js"]
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["/dist/content-script.js"],
+    "run_at": "document_idle",
+    "all_frames": true
+  }]
 }

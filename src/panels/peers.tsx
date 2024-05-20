@@ -67,31 +67,31 @@ function Peer ({ peer }: PeerProps) {
   )
 }
 
-function TransportIcon ({ src }) {
-  return <img src={src} height={16} width={16} className={'Icon'} />
+function TransportIcon ({ src, key }) {
+  return <img src={src} height={16} width={16} className={'Icon'} key={key} />
 }
 
 function PeerIcon ({ peer }: PeerProps) {
   return (
     <>
       {
-        peer.addresses.map(address => {
+        peer.addresses.map((address, index) => {
          const ma = multiaddr(address)
 
          if (WebRTC.matches(ma)) {
-          return <TransportIcon src={webrtcLogo} />
+          return <TransportIcon src={webrtcLogo} key={`address-${index}`} />
          }
 
          if (WebSockets.matches(ma) || WebSocketsSecure.matches(ma)) {
-          return <TransportIcon src={websocketLogo} />
+          return <TransportIcon src={websocketLogo} key={`address-${index}`} />
          }
 
          if (WebTransport.matches(ma)) {
-          return <TransportIcon src={webtransportLogo} />
+          return <TransportIcon src={webtransportLogo} key={`address-${index}`} />
          }
 
          if (Circuit.matches(ma)) {
-          return <TransportIcon src={circuitRelay} />
+          return <TransportIcon src={circuitRelay} key={`address-${index}`} />
          }
         })
       }

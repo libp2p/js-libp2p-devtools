@@ -4,10 +4,14 @@ import { createRoot } from 'react-dom/client'
 import { getBrowserTheme } from './utils/get-theme.js'
 import { Inspector } from './panels/inspector.js'
 import { FloatingPanel } from './panels/floating-panel.js'
-import { LIBP2P_DEVTOOLS_METRICS_INSTANCE, Status } from '@libp2p/devtools-metrics'
+import { LIBP2P_DEVTOOLS_METRICS_KEY } from '@libp2p/devtools-metrics'
 import type { Peer } from '@libp2p/devtools-metrics'
 import { evalOnPage } from './utils/eval-on-page.js'
-import { delay } from './utils/delay.js'
+// import { delay } from './utils/delay.js'
+import { getBrowserInstance } from './utils/get-browser.js'
+import SyntaxHighlighter from 'react-syntax-highlighter'
+
+const browser = getBrowserInstance()
 
 interface OfflineAppState {
   status: 'init' | 'missing' | 'error'
@@ -47,9 +51,10 @@ const MissingPanel = () => {
   return (
     <>
       <FloatingPanel>
-        <p>A libp2p node was not found on the on the current page</p>
-        <p>Please ensure you have configured the Debug Tool Metrics module</p>
-        <pre><code>{`
+        <p>@libp2p/devtool-metrics was not found on the on the current page</p>
+        <p>Please ensure you have configured your libp2p node correctly:</p>
+        <SyntaxHighlighter language="javascript">
+      {`
 import { devToolMetrics } from '@libp2p/devtool-metrics'
 import { createLibp2p } from 'libp2p'
 
@@ -59,8 +64,8 @@ const node = await createLibp2p({
   }),
   // ...other config here
 })
-`}
-          </code></pre>
+      `}
+    </SyntaxHighlighter>
       </FloatingPanel>
     </>
   )
@@ -76,6 +81,11 @@ class App extends Component {
       status: 'init'
     }
 
+    browser.runtime.sendMessage({
+      tabId: browser.devtools.inspectedWindow.tabId,
+      script: '/dist/content-script.js'
+    });
+
     // let the user know if we can't find libp2p after 5s
     const timeout = setTimeout(() => {
       this.setState({
@@ -84,14 +94,22 @@ class App extends Component {
     }, 5000)
 
     Promise.resolve().then(async () => {
-      await findLibp2p(1000)
+      const metricsPresent = await evalOnPage<boolean>(`${LIBP2P_DEVTOOLS_METRICS_KEY}`)
+
+      if (!metricsPresent) {
+        this.setState({
+          status: 'missing'
+        })
+        return
+      }
+
 
       // we found it, no need to let the user know
       clearTimeout(timeout)
-
+/*
       while (true) {
         try {
-          const status = await evalOnPage<Status>(`${LIBP2P_DEVTOOLS_METRICS_INSTANCE}.getStatus()`)
+          const status = await evalOnPage<boolean>(`${LIBP2P_DEVTOOLS_METRICS_KEY}`)
 
           this.setState({
             status: 'online',
@@ -106,6 +124,8 @@ class App extends Component {
           await delay(1000)
         }
       }
+
+      */
     })
     .catch(err => {
       console.error('error communicating with page', err)
@@ -158,24 +178,3 @@ if (body != null) {
 
 const root = createRoot(document.getElementById('app'))
 root.render(<App />)
-
-async function findLibp2p (retryAfter: number): Promise<void> {
-  while (true) {
-    try {
-      await evalOnPage<boolean, void>(`${LIBP2P_DEVTOOLS_METRICS_INSTANCE} != null`, (arg) => {
-        if (!arg) {
-          throw new Error('libp2p not found')
-        }
-      })
-
-      return
-    } catch (err) {
-      if (err.message === 'libp2p not found') {
-        await delay(retryAfter)
-        continue
-      }
-
-      throw err
-    }
-  }
-}
