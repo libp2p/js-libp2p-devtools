@@ -2,7 +2,7 @@ import React from 'react'
 import './panel.css'
 
 interface PanelProps {
-  children?: any[]
+  children?: any[] | any
 }
 
 export function Panel ({ children }: PanelProps) {

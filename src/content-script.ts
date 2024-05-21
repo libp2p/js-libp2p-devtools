@@ -1,20 +1,20 @@
 /**
- * This script is injected into the webpage being monitored.
+ * This script is injected into the webpage being monitored
  *
  * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts
  * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Background_scripts
  */
 
 import { getBrowserInstance } from './utils/get-browser.js'
-import type { DevToolsMessage } from '@libp2p/devtools-metrics'
+import { SOURCE_METRICS, SOURCE_DEVTOOLS, type DevToolsMessage, SOURCE_SERVICE_WORKER } from '@libp2p/devtools-metrics'
 
 const browser = getBrowserInstance()
 
+let port: chrome.runtime.Port | undefined
+
 /**
  * Receive events broadcast by `@libp2p/devtools-metrics` and forward them on to
- * the background script, which forwards them on to dev tools.
- *
- * web page -> **content-script.js** -> background.js -> dev tools
+ * the service worker, which forwards them on to the dev tools panel
  */
 window.addEventListener('message', async (event) => {
   // Only accept messages from same frame
@@ -24,31 +24,37 @@ window.addEventListener('message', async (event) => {
 
   const message = event.data
 
-  if (message?.source !== '@libp2p/devtools-metrics:node') {
+  if (message?.source !== SOURCE_METRICS) {
     // ignore messages from other sources
     return
   }
 
   try {
-    await browser.runtime.sendMessage(message)
-  } catch (err) {
-    console.error('error sending message to dev tools', err)
+    // send message to worker
+    port?.postMessage(message)
+  } catch {
+
   }
 })
 
 /**
- * Receive events broadcast by the dev tools and forward them on to
+ * Receive events broadcast by the services worker and forward them on to
  * `@libp2p/devtools-metrics`.
- *
- * dev tools -> background.js -> **content-script.js** -> web page
  */
-browser.runtime.onMessage.addListener((request: DevToolsMessage) => {
-  if (request.source !== '@libp2p/devtools-metrics:devtools') {
-    // ignore messages from other sources
+browser.runtime.onConnect.addListener((p) => {
+  // only accept incoming connections from the service worker
+  if (p.name !== SOURCE_SERVICE_WORKER) {
     return
   }
 
-  console.info('content-script.js incoming message from dev tools', request)
+  port = p
+  port.onMessage.addListener((message: DevToolsMessage) => {
+    if (message.source === SOURCE_DEVTOOLS) {
+      window.postMessage(message, '*')
+    }
+  })
 
-  window.postMessage(request, '*')
+  port.onDisconnect.addListener(() => {
+    port = undefined
+  })
 })

@@ -3,5 +3,8 @@
 export default {
   build: {
     bundlesizeMax: '18kB'
+  },
+  dependencyCheck: {
+    files: []
   }
 }

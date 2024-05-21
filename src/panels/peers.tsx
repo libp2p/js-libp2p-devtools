@@ -1,17 +1,23 @@
 import './peers.css'
 import React, { useState } from 'react'
 import { Panel } from './panel.js'
-import { Peer } from '@libp2p/devtools-metrics'
 import { base64 } from 'multiformats/bases/base64'
 import { toString as uint8ArrayToString } from 'uint8arrays/to-string'
-import { multiaddr } from '@multiformats/multiaddr'
-import { WebRTC, WebSockets, WebSocketsSecure, WebTransport, Circuit } from '@multiformats/multiaddr-matcher'
-import webrtcLogo from '../../public/img/webrtc.svg'
-import websocketLogo from '../../public/img/websocket.svg'
-import webtransportLogo from '../../public/img/webtransport.svg'
-import circuitRelay from '../../public/img/circuit-relay.svg'
-import disclosureTriangleClosed from '../../public/img/disclosure-triangle-closed.svg'
-import disclosureTriangleOpen from '../../public/img/disclosure-triangle-open.svg'
+import { multiaddr, type Multiaddr } from '@multiformats/multiaddr'
+import { WebRTC, WebSockets, WebSocketsSecure, WebTransport, Circuit, QUIC, QUICV1, TCP } from '@multiformats/multiaddr-matcher'
+import webrtcTransport from '../../public/img/transport-webrtc.svg'
+import websocketTransport from '../../public/img/transport-websocket.svg'
+import webtransportTransport from '../../public/img/transport-webtransport.svg'
+import circuitRelayTransport from '../../public/img/transport-circuit-relay.svg'
+import quicTransport from '../../public/img/transport-quic.svg'
+import tcpTransport from '../../public/img/transport-tcp.svg'
+import unknownTransport from '../../public/img/transport-unknown.svg'
+import certifiedMultiaddr from '../../public/img/multiaddr-certified.svg'
+import uncertifiedMultiaddr from '../../public/img/multiaddr-uncertified.svg'
+import disclosureTriangleClosed from '../../public/img/icon-disclosure-triangle-closed.svg'
+import disclosureTriangleOpen from '../../public/img/icon-disclosure-triangle-open.svg'
+import copyIcon from '../../public/img/icon-copy.svg'
+import type { Peer } from '@libp2p/devtools-metrics'
 
 interface PeersProps {
   peers: Peer[]
@@ -29,7 +35,7 @@ export function Peers ({ peers }: PeersProps) {
   return (
     <>
       {
-        peers.map(peer => <Peer key={peer.peerId} peer={peer} />)
+        peers.map(peer => <Peer key={peer.id} peer={peer} />)
       }
     </>
   )
@@ -46,11 +52,10 @@ function Peer ({ peer }: PeerProps) {
   if (expanded) {
     return (
       <Panel>
-        <h2><img src={disclosureTriangleOpen} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(false)} /> <PeerIcon peer={peer} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.peerId}</span></h2>
+        <h2><img src={disclosureTriangleOpen} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(false)} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.id}</span></h2>
         <p>
           <PeerTags peer={peer} />
         </p>
-        <ConnectedMultiaddrs peer={peer} />
         <PeerMultiaddrs peer={peer} />
         <PeerProtocols peer={peer} />
       </Panel>
@@ -59,43 +64,11 @@ function Peer ({ peer }: PeerProps) {
 
   return (
     <Panel>
-      <h2><img src={disclosureTriangleClosed} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(true)} /> <PeerIcon peer={peer} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.peerId}</span></h2>
+      <h2><img src={disclosureTriangleClosed} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(true)} /> <PeerAgent peer={peer} /> <span className="PeerId">{peer.id}</span></h2>
       <p>
         <PeerTags peer={peer} />
       </p>
     </Panel>
-  )
-}
-
-function TransportIcon ({ src, key }) {
-  return <img src={src} height={16} width={16} className={'Icon'} key={key} />
-}
-
-function PeerIcon ({ peer }: PeerProps) {
-  return (
-    <>
-      {
-        peer.addresses.map((address, index) => {
-         const ma = multiaddr(address)
-
-         if (WebRTC.matches(ma)) {
-          return <TransportIcon src={webrtcLogo} key={`address-${index}`} />
-         }
-
-         if (WebSockets.matches(ma) || WebSocketsSecure.matches(ma)) {
-          return <TransportIcon src={websocketLogo} key={`address-${index}`} />
-         }
-
-         if (WebTransport.matches(ma)) {
-          return <TransportIcon src={webtransportLogo} key={`address-${index}`} />
-         }
-
-         if (Circuit.matches(ma)) {
-          return <TransportIcon src={circuitRelay} key={`address-${index}`} />
-         }
-        })
-      }
-    </>
   )
 }
 
@@ -123,14 +96,60 @@ function PeerTags ({ peer }: PeerProps) {
   )
 }
 
-function ConnectedMultiaddrs ({ peer }: PeerProps) {
-  if (peer.addresses.length === 0) {
-    return undefined
+export interface TransportIconProps {
+  multiaddr: Multiaddr
+}
+
+function TransportIcon ({ multiaddr }: TransportIconProps) {
+  let src: string = unknownTransport
+
+  if (WebRTC.matches(multiaddr)) {
+    src = webrtcTransport
+  } else if (Circuit.matches(multiaddr)) {
+    src = circuitRelayTransport
+  } else if (WebSockets.matches(multiaddr) || WebSocketsSecure.matches(multiaddr)) {
+    src = websocketTransport
+  } else if (WebTransport.matches(multiaddr)) {
+    src = webtransportTransport
+  } else if (QUIC.matches(multiaddr) || QUICV1.matches(multiaddr)) {
+    src = quicTransport
+  } else if (TCP.matches(multiaddr)) {
+    src = tcpTransport
   }
 
   return (
     <>
-      {peer.addresses.map((ma, index) => <Multiaddr key={`ma-${index}`} multiaddr={ma} />)}
+    <img src={src} height={16} width={16} className={'Icon'} />
+    </>
+  )
+}
+
+export interface CertifiedIconProps {
+  isCertified?: boolean
+}
+
+function CertifiedIcon ({ isCertified }: CertifiedIconProps) {
+  return (
+    <>
+      <img src={isCertified === true ? certifiedMultiaddr : uncertifiedMultiaddr} height={16} width={16} className={'Icon'} />
+    </>
+  )
+}
+
+
+export interface TransportIconProps {
+  multiaddr: Multiaddr
+}
+
+function CopyIcon ({ multiaddr }: TransportIconProps) {
+  function copyToClipboard (evt: any) {
+    evt.preventDefault()
+    navigator.clipboard.writeText(multiaddr.toString())
+  }
+
+  return (
+    <>
+      <img src={copyIcon} height={16} width={16} className={'Icon'} onClick={evt => copyToClipboard(evt)} />
     </>
   )
 }
@@ -141,25 +160,32 @@ interface MultiaddrProps {
   key?: string
 }
 
-function Multiaddr ({ multiaddr, isCertified }: MultiaddrProps) {
+function MultiaddrPanel ({ multiaddr: m, isCertified }: MultiaddrProps) {
+  const ma = multiaddr(m)
+
   return (
     <div className={'Multiaddr'}>
-      <pre><code>{isCertified === true ? '🔒 ' : ''}{multiaddr}</code></pre>
+      <TransportIcon multiaddr={ma} />
+      <CertifiedIcon isCertified={isCertified} />
+      <CopyIcon multiaddr={ma} />
+      <code>{m}</code>
     </div>
   )
 }
 
 function PeerMultiaddrs ({ peer }: PeerProps) {
-  if (peer.multiaddrs.length === 0) {
+  if (peer.addresses.length === 0) {
     return undefined
   }
 
   return (
     <>
-      <h3>Multiaddrs</h3>
-      <ul>
-        {peer.multiaddrs.map(({ multiaddr, isCertified }, index) => <Multiaddr key={`ma-${index}`} multiaddr={multiaddr} isCertified={isCertified} />)}
-      </ul>
+      <div className="PeerMultiaddrs">
+        <h3>Multiaddrs</h3>
+        <ul>
+          {peer.addresses.map(({ multiaddr: m, isCertified }, index) => <MultiaddrPanel key={`ma-${index}`} multiaddr={m} isCertified={isCertified} />)}
+        </ul>
+      </div>
     </>
   )
 }

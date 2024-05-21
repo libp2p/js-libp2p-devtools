@@ -1,10 +1,10 @@
 import React from 'react'
 import { Panel } from './panel.js'
 
-export function DHT () {
+export function Routing () {
   return (
     <Panel>
-      <p>dht</p>
+      <p>routing</p>
     </Panel>
   )
 }

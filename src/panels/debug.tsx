@@ -2,16 +2,16 @@ import React, { useState } from 'react'
 import { Panel } from './panel.js'
 import { Button } from './button.js'
 import { TextInput } from './text-input.js'
-import { getBrowserInstance } from '../utils/get-browser.js'
-import { evalOnPage } from '../utils/eval-on-page.js'
-import { LIBP2P_DEVTOOLS_METRICS_INSTANCE } from '@libp2p/devtools-metrics'
+import { sendMessage } from '../utils/send-message.js'
+import type { EnableDebugMessage } from '@libp2p/devtools-metrics'
 
-const browser = getBrowserInstance()
-
-function sendDebug (evt: Event, namespace: string): boolean {
+function sendDebug (evt: { preventDefault: () => void }, namespace: string): boolean {
   evt.preventDefault()
 
-  evalOnPage(`${LIBP2P_DEVTOOLS_METRICS_INSTANCE}.setDebug(${JSON.stringify(namespace)})`)
+  sendMessage<EnableDebugMessage>({
+    type: 'debug',
+    namespace
+  })
 
   if (namespace.length > 0) {
     localStorage.setItem('debug', namespace)

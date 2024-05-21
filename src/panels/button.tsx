@@ -1,18 +1,18 @@
-import React from 'react'
+import React, { type MouseEventHandler } from 'react'
 import './button.css'
 
 interface ButtonProps {
-  children?: any[]
-  onClick: (evt: Event) => void
+  children?: any[] | string
+  onClick: MouseEventHandler
   primary?: boolean
   secondary?: boolean
   danger?: boolean
 }
 
-export function Button (props: ButtonProps) {
+export function Button ({ children, onClick, primary, secondary, danger }: ButtonProps) {
   return (
-    <button type="button" {...props} className={`Button ${props.primary ? 'primary' : ''} ${props.secondary ? 'secondary' : ''} ${props.danger ? 'danger' : ''}`}>
-      {props.children}
+    <button type="button" onClick={onClick} className={`Button ${primary ? 'primary' : ''} ${secondary ? 'secondary' : ''} ${danger ? 'danger' : ''}`}>
+      {children}
     </button>
   )
 }

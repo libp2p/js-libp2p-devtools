@@ -8,17 +8,17 @@ await esbuild.build({
   outfile: 'dist/app.js',
   format: 'esm',
   loader: {
-    '.png': 'dataurl',
+    '.png': 'file',
     '.svg': 'dataurl'
   }
 })
 
 await esbuild.build({
   entryPoints: [
-    'src/background.ts'
+    'src/service-worker.ts'
   ],
   bundle: true,
-  outfile: 'dist/background.js',
+  outfile: 'dist/service-worker.js',
   format: 'esm'
 })
 
