@@ -63,6 +63,11 @@ browser.runtime.onConnect.addListener(port => {
       })
     }
 
+    // intercept copy-to-clipboard message
+    if (message.type === 'copy-to-clipboard') {
+      return copyToClipboard(tabId, message.value)
+    }
+
     // forward message to content script
     toContentScript[tabId].postMessage(message)
   }
@@ -109,3 +114,28 @@ browser.tabs?.onUpdated.addListener((tabId, changeInfo) => {
     port.postMessage(message)
   }
 })
+
+function copyToClipboard (tabId: number, text: string) {
+  function contentCopy(text: string) {
+    let input = document.createElement('textarea')
+
+    // position absolutely to stop the page from jumping when we call .focus()
+    input.style.position = 'absolute'
+    input.style.top = `${window.scrollY}px`
+    input.style.left = `${window.scrollX}px`
+
+    document.body.appendChild(input)
+    input.value = text
+    input.focus()
+    input.select()
+    document.execCommand("copy")
+    input.remove()
+  }
+
+  // execute the content script
+  chrome.scripting.executeScript({
+    target: { tabId },
+    func: contentCopy,
+    args: [text]
+  })
+}

@@ -9,7 +9,11 @@
     "48": "/public/img/libp2p-48.png",
     "128": "/public/img/libp2p-128.png"
   },
-  "permissions": [],
+  "permissions": [
+    "clipboardWrite",
+    "activeTab",
+    "scripting"
+  ],
   "devtools_page": "devtools.html",
   // https://stackoverflow.com/questions/75043889/manifest-v3-background-scripts-service-worker-on-firefox
   "background": {

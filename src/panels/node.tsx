@@ -1,14 +1,20 @@
 import React from 'react'
 import { Panel } from './panel'
+import { MultiaddrList } from './multiaddr-list'
 
-export function Node ({ peerId, multiaddrs, protocols }) {
+export interface NodePanelProps {
+  peerId: string
+  multiaddrs: string[]
+  protocols: string[]
+}
+
+export function Node ({ peerId, multiaddrs, protocols }: NodePanelProps) {
   return (
     <Panel>
       <h2>PeerId</h2>
       <p>{peerId}</p>
       <small>A PeerId is derived from a node's cryptographic key and uniquely identifies it on the network</small>
-      <h2>Multiaddrs</h2>
-      <Multiaddrs multiaddrs={multiaddrs} />
+      <MultiaddrList addresses={multiaddrs.map(multiaddr => ({ multiaddr }))} />
       <small>Multiaddrs are addresses that other nodes can use to contact this node</small>
       <h2>Supported protocols</h2>
       <Protocols protocols={protocols} />
@@ -17,21 +23,11 @@ export function Node ({ peerId, multiaddrs, protocols }) {
   )
 }
 
-function Multiaddrs ({ multiaddrs }) {
-  if (multiaddrs.length === 0) {
-    return (
-      <p>This node has no multiaddrs so is not dialable.</p>
-    )
-  }
-
-  return (
-    <ul>
-      {multiaddrs.map((multiaddr, index) => <li key={`protocol-${index}`}>{multiaddr}</li>)}
-    </ul>
-  )
+export interface ProtocolsPanelProps {
+  protocols: string[]
 }
 
-function Protocols ({ protocols }) {
+function Protocols ({ protocols }: ProtocolsPanelProps) {
   if (protocols.length === 0) {
     return (
       <p>This node has does not support any protocols.</p>

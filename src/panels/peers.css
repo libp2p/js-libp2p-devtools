@@ -10,24 +10,3 @@
   color: #333;
   padding: 5px;
 }
-
-.PeerMultiaddrs {
-  margin-bottom: 12px;
-  margin-left: 24px;
-}
-
-.Multiaddr {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 3px;
-  margin-left: 12px;
-}
-.Multiaddr code {
-  display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.Multiaddr .Icon {
-  display: inline-block;
-}

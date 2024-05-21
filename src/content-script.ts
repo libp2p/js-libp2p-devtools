@@ -50,6 +50,18 @@ browser.runtime.onConnect.addListener((p) => {
   port = p
   port.onMessage.addListener((message: DevToolsMessage) => {
     if (message.source === SOURCE_DEVTOOLS) {
+
+      // intercept copy-to-clipboard
+      if (message.type === 'copy-to-clipboard') {
+        navigator.clipboard.writeText(message.value)
+          .catch(err => {
+            console.error('could not write to clipboard', err)
+          })
+
+          return
+      }
+
+
       window.postMessage(message, '*')
     }
   })
