@@ -1,4 +1,4 @@
-import React from 'react'
+import 'react'
 import './text-input.css'
 import type { ChangeEvent } from 'react'
 

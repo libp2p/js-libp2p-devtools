@@ -1,8 +1,6 @@
 import { SOURCE_DEVTOOLS, SOURCE_SERVICE_WORKER } from '@libp2p/devtools-metrics'
 import { getBrowserInstance } from './utils/get-browser.js'
-import type { DevToolsMessage, MetricsMessage, PageLoadedMessage } from '@libp2p/devtools-metrics'
-
-console.info('background.js script loaded')
+import type { ApplicationMessage, DevToolsMessage, PageLoadedMessage } from '@libp2p/devtools-metrics'
 
 const browser = getBrowserInstance()
 
@@ -29,16 +27,13 @@ browser.runtime.onConnect.addListener(port => {
     return
   }
 
-  console.info('background.js dev tools connected')
   let tabId: number | undefined
 
-  const onContentScriptMessage = (message: MetricsMessage) => {
+  const onContentScriptMessage = (message: ApplicationMessage): void => {
     port.postMessage(message)
   }
 
-  const onDevToolsPanelMessage = (message: DevToolsMessage) => {
-    console.info('background.js dev tools port message', message)
-
+  const onDevToolsPanelMessage = (message: DevToolsMessage): void => {
     if (tabId == null) {
       tabId = message.tabId
     }
@@ -49,8 +44,6 @@ browser.runtime.onConnect.addListener(port => {
     }
 
     if (toContentScript[tabId] == null) {
-      console.info('background.js creating connection to content-script.js in tab', message.tabId)
-
       toContentScript[tabId] = browser.tabs.connect(message.tabId, {
         name: SOURCE_SERVICE_WORKER
       })
@@ -59,13 +52,15 @@ browser.runtime.onConnect.addListener(port => {
 
       toContentScript[tabId].onDisconnect.addListener((port) => {
         port.onMessage.removeListener(onContentScriptMessage)
+
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete toContentScript[message.tabId]
       })
     }
 
     // intercept copy-to-clipboard message
     if (message.type === 'copy-to-clipboard') {
-      return copyToClipboard(tabId, message.value)
+      copyToClipboard(tabId, message.value); return
     }
 
     // forward message to content script
@@ -78,8 +73,6 @@ browser.runtime.onConnect.addListener(port => {
   // if the dev tools panel disconnects, clean up references - we will reconnect
   // if the dev tools panel is reloaded
   port.onDisconnect.addListener(() => {
-    console.info('background.js dev tools disconnected')
-
     // do not process messages on a closed port
     port.onMessage.removeListener(onDevToolsPanelMessage)
 
@@ -88,23 +81,23 @@ browser.runtime.onConnect.addListener(port => {
       // stop processing content script messages
       toContentScript[tabId]?.onMessage.removeListener(onContentScriptMessage)
 
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete toContentScript[tabId]
+
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete toDevTools[tabId]
     }
   })
 })
 
-browser.tabs?.onUpdated.addListener((tabId, changeInfo) => {
-  console.info('tab', tabId, changeInfo.status, 'have port', Boolean(toDevTools[tabId]))
-
+browser.tabs?.onUpdated.addListener((tabId, changeInfo): void => {
   if (changeInfo.status !== 'complete') {
     return
   }
 
-  let port = toDevTools[tabId]
+  const port = toDevTools[tabId]
 
   if (port != null) {
-    console.info('background.js sending "page-loaded" message to devtools', tabId, changeInfo.status)
     const message: PageLoadedMessage = {
       source: SOURCE_DEVTOOLS,
       type: 'page-loaded',
@@ -115,9 +108,9 @@ browser.tabs?.onUpdated.addListener((tabId, changeInfo) => {
   }
 })
 
-function copyToClipboard (tabId: number, text: string) {
-  function contentCopy(text: string) {
-    let input = document.createElement('textarea')
+function copyToClipboard (tabId: number, text: string): void {
+  function contentCopy (text: string): void {
+    const input = document.createElement('textarea')
 
     // position absolutely to stop the page from jumping when we call .focus()
     input.style.position = 'absolute'
@@ -128,7 +121,7 @@ function copyToClipboard (tabId: number, text: string) {
     input.value = text
     input.focus()
     input.select()
-    document.execCommand("copy")
+    document.execCommand('copy')
     input.remove()
   }
 
@@ -138,4 +131,8 @@ function copyToClipboard (tabId: number, text: string) {
     func: contentCopy,
     args: [text]
   })
+    .catch(err => {
+      // eslint-disable-next-line no-console
+      console.error('error executing copy script', err)
+    })
 }

@@ -1,5 +1,5 @@
 import './multiaddr-list.css'
-import React from 'react'
+import 'react'
 import { multiaddr, type Multiaddr } from '@multiformats/multiaddr'
 import { WebRTC, WebSockets, WebSocketsSecure, WebTransport, Circuit, QUIC, QUICV1, TCP } from '@multiformats/multiaddr-matcher'
 import webrtcTransport from '../../public/img/transport-webrtc.svg'
@@ -11,10 +11,9 @@ import tcpTransport from '../../public/img/transport-tcp.svg'
 import unknownTransport from '../../public/img/transport-unknown.svg'
 import certifiedMultiaddr from '../../public/img/multiaddr-certified.svg'
 import uncertifiedMultiaddr from '../../public/img/multiaddr-uncertified.svg'
-import copyIcon from '../../public/img/icon-copy.svg'
-import type { CopyToClipboardMessage, Peer } from '@libp2p/devtools-metrics'
-import { sendMessage } from '../utils/send-message'
-import { evalOnPage } from '../utils/eval-on-page'
+import type { CopyToClipboardMessage } from '@libp2p/devtools-metrics'
+import { sendMessage } from '../utils/send-message.js'
+import { CopyIcon } from './icons/icon-copy.js'
 
 export interface TransportIconProps {
   multiaddr: Multiaddr
@@ -56,43 +55,12 @@ function CertifiedIcon ({ isCertified }: CertifiedIconProps) {
   )
 }
 
-
 export interface TransportIconProps {
   multiaddr: Multiaddr
 }
 
-function CopyIcon ({ multiaddr }: TransportIconProps) {
-  function copyToClipboard (evt: any) {
-    evt.preventDefault()
-/*
-    navigator.clipboard.writeText(multiaddr.toString())
-      .catch(err => {
-        console.error('could not write to clipboard', err)
-      })
-*/
-    sendMessage<CopyToClipboardMessage>({
-      type: 'copy-to-clipboard',
-      value: multiaddr.toString()
-    })
-
-    /*
-    evalOnPage(`document.getElementsByTagName('body')[0].focus(); navigator.clipboard.writeText(${JSON.stringify(multiaddr.toString())})`)
-      .catch(err => {
-        console.error('could not write to clipboard', err)
-      })
-*/
-
-    }
-
-  return (
-    <>
-      <img src={copyIcon} height={16} width={16} className={'Icon'} onClick={evt => copyToClipboard(evt)} />
-    </>
-  )
-}
-
 interface MultiaddrProps {
-  multiaddr: string
+  multiaddr: Multiaddr
   isCertified?: boolean
   key?: string,
   includeCertification?: boolean
@@ -101,32 +69,44 @@ interface MultiaddrProps {
 function MultiaddrPanel ({ multiaddr: m, isCertified, includeCertification }: MultiaddrProps) {
   const ma = multiaddr(m)
 
+  function copyToClipboard (evt: any) {
+    evt.preventDefault()
+
+    sendMessage<CopyToClipboardMessage>({
+      type: 'copy-to-clipboard',
+      value: multiaddr.toString()
+    })
+  }
+
   return (
     <div className={'Multiaddr'}>
       <TransportIcon multiaddr={ma} />
       {
         includeCertification === true ? <CertifiedIcon isCertified={isCertified} /> : undefined
       }
-      <CopyIcon multiaddr={ma} />
-      <code>{m}</code>
+      <CopyIcon onClick={copyToClipboard} />
+      <code>{m.toString()}</code>
     </div>
   )
 }
 
 export interface MulitaddrListProps {
-  addresses: Array<{ multiaddr: string, isCertified?: boolean }>
+  addresses: Array<{ multiaddr: Multiaddr, isCertified?: boolean }>
   includeCertification?: boolean
 }
 
 export function MultiaddrList ({ addresses, includeCertification }: MulitaddrListProps) {
   if (addresses.length === 0) {
-    return undefined
+    return (
+      <>
+        <p>There are no multiaddrs to display</p>
+      </>
+    )
   }
 
   return (
     <>
       <div className="MultiaddrList">
-        <h3>Multiaddrs</h3>
         <ul>
           {addresses.map(({ multiaddr: m, isCertified }, index) => <MultiaddrPanel key={`ma-${index}`} multiaddr={m} includeCertification={includeCertification} isCertified={isCertified} />)}
         </ul>

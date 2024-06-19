@@ -1,19 +1,27 @@
 import './app.css'
-import React, { Component } from 'react'
+import 'react'
+import { Component } from 'react'
 import { createRoot } from 'react-dom/client'
 import { getBrowserTheme } from './utils/get-theme.js'
 import { Inspector } from './panels/inspector.js'
 import { FloatingPanel } from './panels/floating-panel.js'
 import { LIBP2P_DEVTOOLS_METRICS_KEY } from '@libp2p/devtools-metrics'
-import type { Peer } from '@libp2p/devtools-metrics'
+import type { DevToolsEvents, MetricsRPC, Peer, RPCMessage } from '@libp2p/devtools-metrics'
 import { evalOnPage } from './utils/eval-on-page.js'
-import { delay } from './utils/delay.js'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { dark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { sendMessage, events } from './utils/send-message.js'
 import { defer, type DeferredPromise } from './utils/defer.js'
 import { getPlatform } from './utils/get-platform.js'
 import { GrantPermissions } from './panels/grant-permissions.js'
+import { pushable, type Pushable } from 'it-pushable'
+import { rpc, type RPC } from 'it-rpc'
+import { valueCodecs } from '@libp2p/devtools-metrics/rpc'
+import { base64 } from 'multiformats/bases/base64'
+import { pipe } from 'it-pipe'
+import { TypedEventEmitter } from '@libp2p/interface'
+import { DetectingPanel } from './panels/detecting'
+import type { TypedEventTarget } from '@libp2p/interface'
 
 const theme = getBrowserTheme()
 const platform = getPlatform()
@@ -32,15 +40,14 @@ interface ErrorAppState {
 
 interface OnlineAppState {
   status: 'online'
-  peerId: string
-  multiaddrs: string[]
-  protocols: string[]
+  self: Peer
   peers: Peer[]
+  debug: string
 }
 
 type AppState = OfflineAppState | ErrorAppState | OnlineAppState
 
-const ErrorPanel = ({ error }) => {
+const ErrorPanel = ({ error }: { error: Error }) => {
   return (
     <>
       <FloatingPanel>
@@ -49,17 +56,6 @@ const ErrorPanel = ({ error }) => {
         <pre>
           <code>{error.stack ?? error.message}</code>
         </pre>
-      </FloatingPanel>
-    </>
-  )
-}
-
-const DetectingPanel = () => {
-  return (
-    <>
-      <FloatingPanel>
-        <h2>Please wait</h2>
-        <p>Connecting to libp2p...</p>
       </FloatingPanel>
     </>
   )
@@ -92,7 +88,7 @@ const GrantPermissionsPanel = () => {
       <FloatingPanel>
         <h2>Permissions</h2>
         <p>No data has been received from the libp2p node running on the page.</p>
-        <p>You may need to grant this inspector access to the current page.</p>
+        <p>You may need to grant this extension access to the current page.</p>
         {
           platform === 'unknown' ? (
             <p>Please see your browser documentation for how to do this.</p>
@@ -106,6 +102,10 @@ const GrantPermissionsPanel = () => {
 class App extends Component {
   state: AppState
   nodeConnected: DeferredPromise<boolean>
+  private readonly rpcQueue: Pushable<Uint8Array>
+  private readonly rpc: RPC
+  private readonly metrics: MetricsRPC
+  private readonly events: TypedEventTarget<DevToolsEvents>
 
   constructor (props: any) {
     super(props)
@@ -114,33 +114,61 @@ class App extends Component {
       status: 'init'
     }
 
-    window.addEventListener('message', async (event) => {
-      console.info('devtools incoming message', event)
+    this.rpcQueue = pushable()
+    this.rpc = rpc({
+      valueCodecs
+    })
+
+    // remote metrics instance
+    this.metrics = this.rpc.createClient<MetricsRPC>('metrics')
+
+    // create event emitter to receive events from devtools-metrics
+    this.events = new TypedEventEmitter<DevToolsEvents>()
+    this.events.addEventListener('metrics', (evt) => {
+      // handle incoming metrics
+
+    })
+    this.events.addEventListener('self', (evt) => {
+      this.setState(s => ({
+        ...s,
+        self: evt.detail
+      }))
+    })
+    this.events.addEventListener('peers', (evt) => {
+      this.setState(s => ({
+        ...s,
+        peers: evt.detail
+      }))
+    })
+
+    this.rpc.createTarget('devTools', this.events)
+
+    // send RPC messages
+    Promise.resolve()
+     .then(async () => {
+        await pipe(
+          this.rpcQueue,
+          this.rpc,
+          async source => {
+            for await (const buf of source) {
+              sendMessage<RPCMessage>({
+                type: 'libp2p-rpc',
+                message: base64.encode(buf)
+              })
+            }
+          }
+        )
+     })
+     .catch(err => {
+       console.error('error while reading RPC messages', err)
+     })
+
+    // receive RPC messages
+    events.addEventListener('libp2p-rpc', (event) => {
+      this.rpcQueue.push(base64.decode(event.detail.message))
     })
 
     this.nodeConnected = defer<boolean>()
-
-    // the node sent us a self update
-    events.addEventListener('self', (event) => {
-      this.nodeConnected.resolve(true)
-
-      this.setState({
-        status: 'online',
-        peerId: event.detail.peer.id,
-        multiaddrs: event.detail.peer.multiaddrs,
-        protocols: event.detail.peer.protocols
-      })
-    })
-
-    // the node's peers changed
-    events.addEventListener('peers', (event) => {
-      this.nodeConnected.resolve(true)
-
-      this.setState({
-        status: 'online',
-        peers: event.detail.peers
-      })
-    })
 
     // the inspected page was reloaded while the dev tools panel is open
     events.addEventListener('page-loaded', () => {
@@ -156,12 +184,6 @@ class App extends Component {
   }
 
   init () {
-    const showPermissions = setTimeout(() => {
-      this.setState({
-        status: 'permissions'
-      })
-    }, 5000)
-
     Promise.resolve().then(async () => {
       const metricsPresent = await evalOnPage<boolean>(`${LIBP2P_DEVTOOLS_METRICS_KEY} === true`)
 
@@ -172,28 +194,35 @@ class App extends Component {
         return
       }
 
-      while (true) {
-        // ask the node to identify itself
-        sendMessage({
-          type: 'identify'
+      const signal = AbortSignal.timeout(2000)
+
+      try {
+        const { self, peers, debug } = await this.metrics.init({
+          signal
         })
 
-        const result = await Promise.any([
-          delay(1000),
-          this.nodeConnected.promise
-        ])
-
-        if (result === true) {
-          console.info('connected!')
-          clearTimeout(showPermissions)
-
-          break
+        this.setState({
+          status: 'online',
+          self,
+          peers,
+          debug
+        })
+      } catch (err: any) {
+        if (signal.aborted) {
+          this.setState({
+            status: 'permissions'
+          })
+          return
         }
+
+        this.setState({
+          status: 'error',
+          error: err
+        })
       }
     })
     .catch(err => {
       console.error('error communicating with page', err)
-      clearTimeout(showPermissions)
 
       this.setState({
         status: 'error',
@@ -203,12 +232,6 @@ class App extends Component {
   }
 
   render() {
-    if (this.state.status === 'online') {
-      return (
-        <Inspector {...this.state} />
-      )
-    }
-
     if (this.state.status === 'init') {
       return (
         <DetectingPanel />
@@ -233,10 +256,14 @@ class App extends Component {
       )
     }
 
+    if (this.state.status === 'online') {
+      return (
+        <Inspector {...this.state} metrics={this.metrics} />
+      )
+    }
+
     return (
-      <>
-        <p>...</p>
-      </>
+      <p>{this.state.status}</p>
     )
   }
 }

@@ -11,10 +11,22 @@
   },
   "author": "",
   "license": "ISC",
+  "eslintConfig": {
+    "extends": "ipfs",
+    "parserOptions": {
+      "project": true,
+      "sourceType": "module"
+    }
+  },
   "dependencies": {
     "@libp2p/devtools-metrics": "*",
     "@multiformats/multiaddr": "^12.2.3",
     "@multiformats/multiaddr-matcher": "^1.2.1",
+    "it-drain": "^3.0.7",
+    "it-foreach": "^2.1.1",
+    "it-pipe": "^3.0.1",
+    "it-pushable": "^3.2.3",
+    "it-rpc": "^1.0.0",
     "multiformats": "^13.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

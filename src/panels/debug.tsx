@@ -1,29 +1,34 @@
-import React, { useState } from 'react'
+import 'react'
+import { useState } from 'react'
 import { Panel } from './panel.js'
 import { Button } from './button.js'
 import { TextInput } from './text-input.js'
-import { sendMessage } from '../utils/send-message.js'
-import type { EnableDebugMessage } from '@libp2p/devtools-metrics'
+import type { MetricsRPC } from '@libp2p/devtools-metrics'
+import { SmallError, SmallSuccess } from './status.js'
 
-function sendDebug (evt: { preventDefault: () => void }, namespace: string): boolean {
-  evt.preventDefault()
-
-  sendMessage<EnableDebugMessage>({
-    type: 'debug',
-    namespace
-  })
-
-  if (namespace.length > 0) {
-    localStorage.setItem('debug', namespace)
-  } else {
-    localStorage.removeItem('debug')
-  }
-
-  return false
+export interface DebugProps {
+  metrics: MetricsRPC
+  debug: string
 }
 
-export function Debug () {
-  const [namespace, setNamespace] = useState(localStorage.getItem('debug') ?? '')
+export function Debug ({ metrics, debug }: DebugProps) {
+  const [namespace, setNamespace] = useState(debug)
+  const [result, setResult] = useState(<small>E.g. `libp2p:*`, `libp2p:kad-dht*,*:trace`, etc</small>)
+
+  function sendDebug (evt: { preventDefault: () => void }, namespace: string): boolean {
+    evt.preventDefault()
+
+    metrics.setDebug(namespace)
+      .then(() => {
+        setNamespace(namespace)
+        setResult(<SmallSuccess message="Update successful" />)
+      }, (err) => {
+        console.info('no', err)
+        setResult(<SmallError error={err} />)
+      })
+
+    return false
+  }
 
   return (
     <Panel>
@@ -34,7 +39,7 @@ export function Debug () {
         <Button onClick={(evt) => sendDebug(evt, namespace)} primary={true}>Go</Button>
         <Button onClick={(evt) => sendDebug(evt, '')} danger={true}>Disable</Button>
       </form>
-      <small>E.g. `libp2p:*`, `libp2p:kad-dht*,*:trace`, etc</small>
+      {result}
     </Panel>
   )
 }

@@ -1,0 +1,7 @@
+small.Error {
+  color: var(--warning-text-color);
+}
+
+small.Success {
+  color: var(--success-text-colour);
+}

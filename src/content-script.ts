@@ -5,8 +5,8 @@
  * @see https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Background_scripts
  */
 
-import { getBrowserInstance } from './utils/get-browser.js'
 import { SOURCE_METRICS, SOURCE_DEVTOOLS, type DevToolsMessage, SOURCE_SERVICE_WORKER } from '@libp2p/devtools-metrics'
+import { getBrowserInstance } from './utils/get-browser.js'
 
 const browser = getBrowserInstance()
 
@@ -16,7 +16,7 @@ let port: chrome.runtime.Port | undefined
  * Receive events broadcast by `@libp2p/devtools-metrics` and forward them on to
  * the service worker, which forwards them on to the dev tools panel
  */
-window.addEventListener('message', async (event) => {
+window.addEventListener('message', (event) => {
   // Only accept messages from same frame
   if (event.source !== window) {
     return
@@ -38,7 +38,7 @@ window.addEventListener('message', async (event) => {
 })
 
 /**
- * Receive events broadcast by the services worker and forward them on to
+ * Receive events broadcast by the service worker and forward them on to
  * `@libp2p/devtools-metrics`.
  */
 browser.runtime.onConnect.addListener((p) => {
@@ -50,17 +50,16 @@ browser.runtime.onConnect.addListener((p) => {
   port = p
   port.onMessage.addListener((message: DevToolsMessage) => {
     if (message.source === SOURCE_DEVTOOLS) {
-
       // intercept copy-to-clipboard
       if (message.type === 'copy-to-clipboard') {
         navigator.clipboard.writeText(message.value)
           .catch(err => {
+            // eslint-disable-next-line no-console
             console.error('could not write to clipboard', err)
           })
 
-          return
+        return
       }
-
 
       window.postMessage(message, '*')
     }
