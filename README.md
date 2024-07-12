@@ -23,10 +23,10 @@ Configure `@libp2p/devtools-metrics` as your metrics implementation:
 
 ```ts
 import { createLibp2p } from 'libp2p'
-import { createDevToolsMetrics } from '@libp2p/devtools-metrics'
+import { devToolsMetrics } from '@libp2p/devtools-metrics'
 
 const node = await createLibp2p({
-  metrics: createDevToolsMetrics(),
+  metrics: devToolsMetrics(),
   //... other options here
 })
 ```
