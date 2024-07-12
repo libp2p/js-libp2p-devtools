@@ -22,7 +22,7 @@
   --success-text-colour: #6DD58C;
 }
 
-.light :root {
+.light {
   --background-color: #FFF;
   --text-color: #1f1f1f;
   --active-text-color: #a8c7fa;
