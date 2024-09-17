@@ -16,7 +16,7 @@
 }
 
 .Menu button:hover {
-  color: #FFF;
+  color: var(--primary-action-color-hover);
 }
 
 .Menu button.selected {
