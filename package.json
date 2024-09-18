@@ -19,7 +19,7 @@
     }
   },
   "dependencies": {
-    "@libp2p/devtools-metrics": "*",
+    "@libp2p/devtools-metrics": "^1.0.1",
     "@multiformats/multiaddr": "^12.2.3",
     "@multiformats/multiaddr-matcher": "^1.2.1",
     "it-drain": "^3.0.7",
