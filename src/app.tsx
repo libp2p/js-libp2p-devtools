@@ -1,33 +1,33 @@
 import './app.css'
 import 'react'
-import { Component } from 'react'
-import { createRoot } from 'react-dom/client'
-import { getBrowserTheme } from './utils/get-theme.js'
-import { Inspector } from './panels/inspector.js'
-import { FloatingPanel } from './panels/floating-panel.js'
 import { LIBP2P_DEVTOOLS_METRICS_KEY } from '@libp2p/devtools-metrics'
-import type { DevToolsEvents, MetricsRPC, Peer, RPCMessage } from '@libp2p/devtools-metrics'
-import { evalOnPage } from './utils/eval-on-page.js'
+import { valueCodecs } from '@libp2p/devtools-metrics/rpc'
+import { TypedEventEmitter } from '@libp2p/interface'
+import { pipe } from 'it-pipe'
+import { pushable } from 'it-pushable'
+import { rpc } from 'it-rpc'
+import { base64 } from 'multiformats/bases/base64'
+import { Component, type ReactElement } from 'react'
+import { createRoot } from 'react-dom/client'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { dark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
-import { sendMessage, events } from './utils/send-message.js'
-import { defer, type DeferredPromise } from './utils/defer.js'
-import { getPlatform } from './utils/get-platform.js'
+import { DetectingPanel } from './panels/detecting.js'
+import { FloatingPanel } from './panels/floating-panel.js'
 import { GrantPermissions } from './panels/grant-permissions.js'
-import { pushable, type Pushable } from 'it-pushable'
-import { rpc, type RPC } from 'it-rpc'
-import { valueCodecs } from '@libp2p/devtools-metrics/rpc'
-import { base64 } from 'multiformats/bases/base64'
-import { pipe } from 'it-pipe'
-import { TypedEventEmitter } from '@libp2p/interface'
-import { DetectingPanel } from './panels/detecting'
-import type { TypedEventTarget } from '@libp2p/interface'
+import { Inspector } from './panels/inspector.js'
+import { defer } from './utils/defer.js'
+import { evalOnPage } from './utils/eval-on-page.js'
+import { getPlatform } from './utils/get-platform.js'
+import { getBrowserTheme } from './utils/get-theme.js'
+import { sendMessage, events } from './utils/send-message.js'
+import type { DeferredPromise } from './utils/defer.js'
+import type { DevToolsEvents, MetricsRPC, Peer, RPCMessage } from '@libp2p/devtools-metrics'
+import type { TypedEventTarget, Message } from '@libp2p/interface'
+import type { Pushable } from 'it-pushable'
+import type { RPC } from 'it-rpc'
 
 const theme = getBrowserTheme()
 const platform = getPlatform()
-
-console.info('theme is', theme, 'browser is', platform)
-
 
 interface OfflineAppState {
   status: 'init' | 'missing' | 'permissions'
@@ -43,11 +43,13 @@ interface OnlineAppState {
   self: Peer
   peers: Peer[]
   debug: string
+  capabilities: Record<string, string[]>
+  pubsub: Record<string, Message[]>
 }
 
 type AppState = OfflineAppState | ErrorAppState | OnlineAppState
 
-const ErrorPanel = ({ error }: { error: Error }) => {
+const ErrorPanel = ({ error }: { error: Error }): ReactElement => {
   return (
     <>
       <FloatingPanel>
@@ -61,7 +63,7 @@ const ErrorPanel = ({ error }: { error: Error }) => {
   )
 }
 
-const MissingPanel = () => {
+const MissingPanel = (): ReactElement => {
   return (
     <>
       <FloatingPanel>
@@ -82,7 +84,7 @@ const node = await createLibp2p({
   )
 }
 
-const GrantPermissionsPanel = () => {
+const GrantPermissionsPanel = (): ReactElement => {
   return (
     <>
       <FloatingPanel>
@@ -90,9 +92,11 @@ const GrantPermissionsPanel = () => {
         <p>No data has been received from the libp2p node running on the page.</p>
         <p>You may need to grant this extension access to the current page.</p>
         {
-          platform === 'unknown' ? (
-            <p>Please see your browser documentation for how to do this.</p>
-          ) : <GrantPermissions />
+          platform === 'unknown'
+            ? (
+              <p>Please see your browser documentation for how to do this.</p>
+              )
+            : <GrantPermissions />
         }
       </FloatingPanel>
     </>
@@ -141,11 +145,24 @@ class App extends Component {
       }))
     })
 
+    this.events.addEventListener('pubsub:message', (evt) => {
+      this.setState(s => ({
+        ...s,
+        pubsub: {
+          ...(s.pubsub ?? {}),
+          [evt.detail.topic ?? '']: [
+            ...(s.pubsub[evt.detail.topic] ?? []),
+            evt.detail
+          ]
+        }
+      }))
+    })
+
     this.rpc.createTarget('devTools', this.events)
 
     // send RPC messages
     Promise.resolve()
-     .then(async () => {
+      .then(async () => {
         await pipe(
           this.rpcQueue,
           this.rpc,
@@ -158,10 +175,10 @@ class App extends Component {
             }
           }
         )
-     })
-     .catch(err => {
-       console.error('error while reading RPC messages', err)
-     })
+      })
+      .catch(err => {
+        console.error('error while reading RPC messages', err)
+      })
 
     // receive RPC messages
     events.addEventListener('libp2p-rpc', (event) => {
@@ -183,7 +200,7 @@ class App extends Component {
     this.init()
   }
 
-  init () {
+  init (): void {
     Promise.resolve().then(async () => {
       const metricsPresent = await evalOnPage<boolean>(`${LIBP2P_DEVTOOLS_METRICS_KEY} === true`)
 
@@ -197,7 +214,7 @@ class App extends Component {
       const signal = AbortSignal.timeout(2000)
 
       try {
-        const { self, peers, debug } = await this.metrics.init({
+        const { self, peers, debug, capabilities } = await this.metrics.init({
           signal
         })
 
@@ -205,7 +222,9 @@ class App extends Component {
           status: 'online',
           self,
           peers,
-          debug
+          debug,
+          capabilities,
+          pubsub: {}
         })
       } catch (err: any) {
         if (signal.aborted) {
@@ -221,17 +240,17 @@ class App extends Component {
         })
       }
     })
-    .catch(err => {
-      console.error('error communicating with page', err)
+      .catch(err => {
+        console.error('error communicating with page', err)
 
-      this.setState({
-        status: 'error',
-        error: err
+        this.setState({
+          status: 'error',
+          error: err
+        })
       })
-    })
   }
 
-  render() {
+  render (): ReactElement {
     if (this.state.status === 'init') {
       return (
         <DetectingPanel />

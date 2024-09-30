@@ -19,11 +19,10 @@
     }
   },
   "dependencies": {
-    "@libp2p/devtools-metrics": "^1.0.1",
+    "@libp2p/interface": "^2.1.2",
+    "@libp2p/devtools-metrics": "*",
     "@multiformats/multiaddr": "^12.2.3",
     "@multiformats/multiaddr-matcher": "^1.2.1",
-    "it-drain": "^3.0.7",
-    "it-foreach": "^2.1.1",
     "it-pipe": "^3.0.1",
     "it-pushable": "^3.2.3",
     "it-rpc": "^1.0.0",

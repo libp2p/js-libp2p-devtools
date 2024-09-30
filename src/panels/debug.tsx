@@ -1,21 +1,20 @@
-import 'react'
-import { useState } from 'react'
-import { Panel } from './panel.js'
+import { useState, type ReactElement } from 'react'
 import { Button } from './button.js'
+import { Panel } from './panel.js'
+import { SmallError, SmallSuccess } from './status.js'
 import { TextInput } from './text-input.js'
 import type { MetricsRPC } from '@libp2p/devtools-metrics'
-import { SmallError, SmallSuccess } from './status.js'
 
 export interface DebugProps {
   metrics: MetricsRPC
   debug: string
 }
 
-export function Debug ({ metrics, debug }: DebugProps) {
+export function Debug ({ metrics, debug }: DebugProps): ReactElement {
   const [namespace, setNamespace] = useState(debug)
   const [result, setResult] = useState(<small>E.g. `libp2p:*`, `libp2p:kad-dht*,*:trace`, etc</small>)
 
-  function sendDebug (evt: { preventDefault: () => void }, namespace: string): boolean {
+  function sendDebug (evt: { preventDefault(): void }, namespace: string): boolean {
     evt.preventDefault()
 
     metrics.setDebug(namespace)
@@ -35,7 +34,7 @@ export function Debug ({ metrics, debug }: DebugProps) {
       <h2>Debug</h2>
       <p>Enter the name of one or more libp2p components to enable logging in the console tab or disable it completely</p>
       <form onSubmit={(evt) => sendDebug(evt, namespace)}>
-        <TextInput type="text" value={namespace} placeholder="libp2p:*" onChange={(e) => setNamespace(e.target.value)} />
+        <TextInput type="text" value={namespace} placeholder="libp2p:*" onChange={(e) => { setNamespace(e.target.value) }} />
         <Button onClick={(evt) => sendDebug(evt, namespace)} primary={true}>Go</Button>
         <Button onClick={(evt) => sendDebug(evt, '')} danger={true}>Disable</Button>
       </form>

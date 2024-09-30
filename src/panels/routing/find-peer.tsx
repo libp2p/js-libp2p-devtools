@@ -1,16 +1,12 @@
-import 'react'
-import { Button } from '../button.js'
-import { TextInput } from '../text-input.js'
-import { Panel } from '../panel.js'
-import { Component, type FormEvent } from 'react'
-import type { MetricsRPC } from '@libp2p/devtools-metrics'
-import { SmallError, SmallSuccess } from '../status'
-import { bases } from 'multiformats/basics'
-import type { PeerId } from '@libp2p/interface'
 import { peerIdFromString } from '@libp2p/peer-id'
-
-// @ts-expect-error - Not easy to combine these types.
-const multibaseDecoder = Object.values(bases).map(b => b.decoder).reduce((d, b) => d.or(b))
+import { Component } from 'react'
+import { Button } from '../button.js'
+import { Panel } from '../panel.js'
+import { SmallError, SmallSuccess } from '../status'
+import { TextInput } from '../text-input.js'
+import type { MetricsRPC } from '@libp2p/devtools-metrics'
+import type { PeerId } from '@libp2p/interface'
+import type { FormEvent, ReactElement } from 'react'
 
 export interface FindPeerProps {
   metrics: MetricsRPC
@@ -33,7 +29,7 @@ export class FindPeer extends Component<FindPeerProps, FindPeerState> {
     }
   }
 
-  componentDidMount(): void {
+  componentDidMount (): void {
     this.setState({
       target: '',
       error: '',
@@ -106,7 +102,7 @@ export class FindPeer extends Component<FindPeerProps, FindPeerState> {
             details: [
               ...s.details,
               <pre key='results'><code>{JSON.stringify(peerInfo, null, 2)}</code></pre>,
-              <SmallSuccess key={`event-${s.details.length}`} message={"Get successful"} />
+              <SmallSuccess key={`event-${s.details.length}`} message={'Get successful'} />
             ]
           }
         })
@@ -125,17 +121,19 @@ export class FindPeer extends Component<FindPeerProps, FindPeerState> {
     return false
   }
 
-  render () {
+  render (): ReactElement {
     return (
       <Panel>
         <p>Enter a PeerId:</p>
         <form onSubmit={(evt) => this.findPeer(evt, this.state.target)}>
-          <TextInput type="text" value={this.state.target} placeholder="123Foo..." onChange={(e) => this.setState({
-            target: e.target.value
-          })} />
+          <TextInput type="text" value={this.state.target} placeholder="123Foo..." onChange={(e) => {
+            this.setState({
+              target: e.target.value
+            })
+          }} />
           <Button onClick={(evt) => this.findPeer(evt, this.state.target)} primary={true}>Get</Button>
         </form>
-        {this.state.error ? <SmallError error={this.state.error} /> : undefined}
+        {this.state.error != null ? <SmallError error={this.state.error} /> : undefined}
         {this.state.details}
       </Panel>
     )

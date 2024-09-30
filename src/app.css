@@ -20,6 +20,7 @@
   --action-border-color: #047DB7;
 
   --success-text-colour: #6DD58C;
+  --dark-success-color: #2c5639;
 }
 
 .light {
@@ -29,7 +30,7 @@
   --dark-text-color: #8F8F8F;
 
   --warning-text-color: #8a0000;
-  --dark-warning-text-color: #4a0000;
+  --dark-warning-color: #4a0000;
 }
 
 body {

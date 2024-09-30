@@ -1,21 +1,20 @@
-import './peer-list.css'
-import 'react'
-import { useState } from 'react'
-import { Panel } from '../panel.js'
+import './list.css'
+import { useState, type ReactElement } from 'react'
 import disclosureTriangleClosed from '../../../public/img/icon-disclosure-triangle-closed.svg'
 import disclosureTriangleOpen from '../../../public/img/icon-disclosure-triangle-open.svg'
-import type { MetricsRPC, Peer } from '@libp2p/devtools-metrics'
-import { MultiaddrList } from '../multiaddr-list.js'
 import { getAgent } from '../../utils/get-agent.js'
 import { DeleteIcon } from '../icons/icon-delete.js'
 import { SpinnerIcon } from '../icons/icon-spinner.js'
+import { MultiaddrList } from '../multiaddr-list.js'
+import { Panel } from '../panel.js'
+import type { Peer as PeerType, MetricsRPC } from '@libp2p/devtools-metrics'
 
 export interface PeersProps {
-  peers: Peer[]
+  peers: PeerType[]
   metrics: MetricsRPC
 }
 
-export function PeerList ({ peers, metrics }: PeersProps) {
+export function PeerList ({ peers, metrics }: PeersProps): ReactElement {
   if (peers.length === 0) {
     return (
       <Panel>
@@ -34,20 +33,26 @@ export function PeerList ({ peers, metrics }: PeersProps) {
 }
 
 interface PeerProps {
-  peer: Peer
+  peer: PeerType
   metrics: MetricsRPC
   key?: string
 }
 
-function Peer ({ peer, metrics }: PeerProps) {
+function Peer ({ peer, metrics }: PeerProps): ReactElement {
   const [expanded, setExpanded] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
-  async function closeConnection (evt: any) {
+  function closeConnection (evt: any): void {
     evt.preventDefault()
 
     setDisconnecting(true)
-    await metrics.closeConnection(peer.id)
+    metrics.closeConnection(peer.id)
+      .catch(err => {
+        console.error('could not close connection', err)
+      })
+      .finally(() => {
+        setDisconnecting(false)
+      })
   }
 
   let disconnectIcon = <DeleteIcon onClick={closeConnection} />
@@ -59,7 +64,7 @@ function Peer ({ peer, metrics }: PeerProps) {
   if (expanded) {
     return (
       <Panel>
-        <h2><img src={disclosureTriangleOpen} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(false)} /> {disconnectIcon} <PeerAgent peer={peer} /> <span className="PeerId">{peer.id.toString()}</span></h2>
+        <h2><img src={disclosureTriangleOpen} height={12} width={12} className={'DisclosureTriangle'} onClick={() => { setExpanded(false) }} /> {disconnectIcon} <PeerAgent peer={peer} /> <span className="PeerId">{peer.id.toString()}</span></h2>
         <p>
           <PeerTags peer={peer} />
         </p>
@@ -72,7 +77,7 @@ function Peer ({ peer, metrics }: PeerProps) {
 
   return (
     <Panel>
-      <h2><img src={disclosureTriangleClosed} height={12} width={12} className={'DisclosureTriangle'} onClick={() => setExpanded(true)} /> {disconnectIcon} <PeerAgent peer={peer} /> <span className="PeerId">{peer.id.toString()}</span></h2>
+      <h2><img src={disclosureTriangleClosed} height={12} width={12} className={'DisclosureTriangle'} onClick={() => { setExpanded(true) }} /> {disconnectIcon} <PeerAgent peer={peer} /> <span className="PeerId">{peer.id.toString()}</span></h2>
       <p>
         <PeerTags peer={peer} />
       </p>
@@ -80,7 +85,7 @@ function Peer ({ peer, metrics }: PeerProps) {
   )
 }
 
-function PeerAgent ({ peer }: Pick<PeerProps, 'peer'>) {
+function PeerAgent ({ peer }: Pick<PeerProps, 'peer'>): ReactElement | undefined {
   if (peer.metadata.AgentVersion == null) {
     return undefined
   }
@@ -90,7 +95,7 @@ function PeerAgent ({ peer }: Pick<PeerProps, 'peer'>) {
   )
 }
 
-function PeerTags ({ peer }: Pick<PeerProps, 'peer'>) {
+function PeerTags ({ peer }: Pick<PeerProps, 'peer'>): ReactElement | undefined {
   const entries = Object.entries(peer.tags)
 
   if (entries.length === 0) {
@@ -104,7 +109,7 @@ function PeerTags ({ peer }: Pick<PeerProps, 'peer'>) {
   )
 }
 
-function PeerProtocols ({ peer }: Pick<PeerProps, 'peer'>) {
+function PeerProtocols ({ peer }: Pick<PeerProps, 'peer'>): ReactElement | undefined {
   if (peer.protocols.length === 0) {
     return undefined
   }
