@@ -33,7 +33,7 @@ const node = await createLibp2p({
 
 3. That's it! Browse to your webapp and open the DevTools, you should see a "libp2p" tab towards the right hand side of the toolbar. Click it to see stats about the running node.
 
-## Running on Firefox
+## Running on Firefox
 
 With the move to Manifest v3, users must now opt in to running content scripts on a page.
 
