@@ -33,11 +33,11 @@
     "uint8arrays": "^5.1.0"
   },
   "devDependencies": {
-    "@types/chrome": "^0.0.268",
+    "@types/chrome": "^0.0.273",
     "@types/react": "^18.3.2",
     "@types/react-dom": "^18.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "aegir": "^42.2.11",
-    "web-ext": "^8.3.0"
+    "aegir": "^44.1.2",
+    "web-ext": "^8.1.0"
   }
 }
