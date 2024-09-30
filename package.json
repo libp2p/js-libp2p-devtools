@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@libp2p/interface": "^2.1.2",
-    "@libp2p/devtools-metrics": "*",
+    "@libp2p/devtools-metrics": "^1.1.4",
     "@multiformats/multiaddr": "^12.2.3",
     "@multiformats/multiaddr-matcher": "^1.2.1",
     "it-pipe": "^3.0.1",
