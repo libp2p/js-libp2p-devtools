@@ -49,7 +49,7 @@ More info: https://blog.mozilla.org/addons/2022/11/17/unified-extensions-button-
   - It's quite rough
 3. Graphs
   - We don't do much with the collected metrics yet. It would be nice to use Chart.js or similar to show some useful graphs
-  - Bonus points for letting the user define their own graphs a la Graphana/Prometheus
+  - Bonus points for letting the user define their own graphs a la Grafana/Prometheus
   - More bonus points for being able to export/import graph configs
 4. Dynamic panels
   - We should be able to inspect the libp2p node's configured services (or protocols?) and, for example, only show a DHT tab if the DHT is configured
