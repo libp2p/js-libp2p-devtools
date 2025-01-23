@@ -10,14 +10,17 @@ Works with [@libp2p/devtools-metrics](https://www.npmjs.com/package/@libp2p/devt
 
 ## Installation instructions
 
-1. Browser installation
+### 1. Browser installation
 
 Until this plugin is published on the relevant browser plugin stores, please run this locally.
 
-- Chrome: [How to load an unpacked extension](https://knowledge.workspace.google.com/kb/load-unpacked-extensions-000005962)
-- Firefox: [How to install temporary add-ons](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing)
+1. Clone this repo
+2. Run `npm i && npm run build`
+3. Install as an unpacked/temporary add on for your browser:
+    - Chrome: [How to load an unpacked extension](https://knowledge.workspace.google.com/kb/load-unpacked-extensions-000005962)
+    - Firefox: [How to install temporary add-ons](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Your_first_WebExtension#installing)
 
-2. App installation
+### 2. App installation
 
 Configure `@libp2p/devtools-metrics` as your metrics implementation:
 
@@ -31,15 +34,25 @@ const node = await createLibp2p({
 })
 ```
 
-3. That's it! Browse to your webapp and open the DevTools, you should see a "libp2p" tab towards the right hand side of the toolbar. Click it to see stats about the running node.
+### 3. Permissions
 
-## Running on Firefox
+With the move to Manifest v3, users must now [opt in](https://blog.mozilla.org/addons/2022/11/17/unified-extensions-button-and-how-to-handle-permissions-in-manifest-v3/) to running content scripts on a page.
 
-With the move to Manifest v3, users must now opt in to running content scripts on a page.
+#### Chrome
 
-This tiny green dot shows that granting permissions is required:
+Please click the extensions button, then grant the extension permission to run:
 
-More info: https://blog.mozilla.org/addons/2022/11/17/unified-extensions-button-and-how-to-handle-permissions-in-manifest-v3/
+<img src="public/img/grant-permissions-light-chrome.png" width="700"/>
+
+#### Firefox
+
+Please click the extensions button, then grant the extension permission to run:
+
+<img src="public/img/grant-permissions-light-firefox.png" width="700"/>
+
+### 4. Go!
+
+Browse to your webapp and open the DevTools, you should see a "libp2p" tab towards the right hand side of the toolbar. Click it to see stats about the running node.
 
 ## What's next?
 
