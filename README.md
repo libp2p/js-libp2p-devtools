@@ -1,3 +1,6 @@
+> [!WARNING]  
+> This project is no longer maintained - please switch to [@ipshipyard/libp2p-devtools](https://github.com/ipshipyard/js-libp2p-inspector/tree/main/packages/libp2p-devtools) which is a drop-in replacement
+
 # js-libp2p DevTools
 
 > A browser plugin that lets you inspect a running libp2p node
